@@ -1,3 +1,4 @@
+import os
 import unittest
 import numpy as np
 
@@ -165,3 +166,67 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# PRUEBAS UNITARIAS
+class TestLeerArchivo(unittest.TestCase):
+    def test_LeerArchivo(self):
+        # Crear un archivo de prueba con datos conocidos
+        with open("test_archivo.txt", "w") as file:
+            file.write("Ciudad1 Ciudad2 10 15 20 50\n")
+            file.write("Ciudad2 Ciudad3 15 20 30 70\n")
+            file.write("Ciudad3 Ciudad4 20 25 35 80\n")
+
+        # Llamar a la función LeerArchivo para leer el archivo de prueba
+        grafo = LeerArchivo("test_archivo.txt")
+
+        # Verificar si la estructura del grafo se ha creado correctamente
+        self.assertEqual(grafo['vertices'], {'Ciudad1', 'Ciudad2', 'Ciudad3', 'Ciudad4'})
+        self.assertEqual(len(grafo['MatrizADY']), 4)
+
+        # Verificar si la matriz de adyacencia se ha construido correctamente
+        expected_matriz = [[0, 10, float('inf'), float('inf')],
+                           [10, 0, 15, float('inf')],
+                           [float('inf'), 15, 0, 20],
+                           [float('inf'), float('inf'), 20, 0]]
+        np.testing.assert_array_equal(grafo['MatrizADY'], expected_matriz)
+
+        # Eliminar el archivo de prueba después de usarlo
+        os.remove("test_archivo.txt")
+
+class TestFuncionesGrafo(unittest.TestCase):
+    def setUp(self):
+        # Preparar un grafo de prueba
+        self.grafo = {'vertices': {'A', 'B', 'C', 'D'},
+                      'MatrizADY': [[0, 3, float('inf'), 7],
+                                    [8, 0, 2, float('inf')],
+                                    [5, float('inf'), 0, 1],
+                                    [2, float('inf'), float('inf'), 0]]}
+
+    def test_AgregarVertice(self):
+        # Probar agregar un nuevo vértice al grafo
+        AgregarVertice(self.grafo, 'E')
+        self.assertIn('E', self.grafo['vertices'])
+
+    def test_AgregarArco(self):
+        # Probar agregar un nuevo arco al grafo
+        AgregarArco(self.grafo, 'A', 'C', 5, 6, 7, 8)
+        self.assertEqual(self.grafo['MatrizADY'][0][2], 5)
+        self.assertEqual(self.grafo['MatrizADY'][2][0], 5)
+
+    def test_CalcularFloyd(self):
+        # Probar el cálculo de Floyd en el grafo
+        CalcularFloyd(self.grafo)
+        expected_matriz = [[0, 3, 5, 6],
+                           [5, 0, 2, 3],
+                           [5, 8, 0, 1],
+                           [2, 5, 7, 0]]
+        np.testing.assert_array_equal(self.grafo['MatrizADY'], expected_matriz)
+
+    def test_CentroGrafo(self):
+        # Probar la función para encontrar el centro del grafo
+        centro = CentroGrafo(self.grafo)
+        self.assertEqual(centro, 'C')
+
+if __name__ == '__main__':
+    unittest.main()
